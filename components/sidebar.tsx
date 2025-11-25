@@ -17,6 +17,7 @@ import {
   LogOut,
   X,
   MessageSquare,
+  NotepadText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -38,6 +39,7 @@ const menuItems = [
   { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },
   { icon: Bell, label: "Notifications", href: "/dashboard/notifications" },
   { icon: Bell, label: "Subscribe", href: "/dashboard/subscribe" },
+  { icon: NotepadText , label: "Banners", href: "/dashboard/banners" },
 ];
 
 export function Sidebar({

@@ -16,6 +16,7 @@ export default function MessagesPage() {
     messages,
     conversations,
     loading,
+    isLoadingMessage,
     fetchInbox,
     fetchMessages,
     sendMessage,
@@ -27,44 +28,54 @@ export default function MessagesPage() {
     fetchInbox()
   }, [fetchInbox])
 
-  const handleSelectCustomer = (customer: Customer) => {
+  // Start a conversation for a given customer
+  const handleStartConversation = async (customer: Customer) => {
+    if (!customer.storeId) {
+      addToast({
+        title: "Error",
+        description: "Customer data is missing store ID to start conversation.",
+        type: "error",
+      })
+      return
+    }
+
+    try {
+      const conversation = await startConversation(customer.storeId)
+      setSelectedConversation(conversation)
+      await fetchMessages(conversation._id)
+
+      addToast({
+        title: "Conversation started",
+        description: `Chat with ${customer.name}`,
+        type: "success",
+      })
+    } catch (error) {
+      console.error(error)
+      addToast({
+        title: "Failed to start conversation",
+        type: "error",
+      })
+    }
+  }
+
+  // When a customer row is clicked
+  // - if conversation exists for that store → open it
+  // - else → create a conversation, then open it
+  const handleSelectCustomer = async (customer: Customer) => {
     setSelectedCustomer(customer)
 
-    // Find if conversation exists with this customer
-    const existingConversation = conversations.find((conv) =>
-      conv.participants.some((p) => p.user._id === customer._id),
+    // Prefer matching by store ID (vendor/store is what chat is keyed on)
+    const existingConversation = conversations.find(
+      (conv) => conv.store && conv.store._id === customer.storeId,
     )
 
     if (existingConversation) {
       setSelectedConversation(existingConversation)
-      fetchMessages(existingConversation._id)
+      await fetchMessages(existingConversation._id)
     } else {
-      setSelectedConversation(null)
+      await handleStartConversation(customer)
     }
   }
-
-// MessagesPage.tsx
-
-const handleStartConversation = async (customer: Customer) => {
-  try {
-    const conversation = await startConversation(customer.storeId) // ⭐ storeId again
-    setSelectedConversation(conversation)
-    fetchMessages(conversation._id)
-
-    addToast({
-      title: "Conversation started",
-      description: `Chat with ${customer.name}`,
-      type: "success",
-    })
-  } catch (error) {
-    console.error(error)
-    addToast({
-      title: "Failed to start conversation",
-      type: "error",
-    })
-  }
-}
-
 
   const handleSendMessage = async (text: string) => {
     if (!selectedConversation) return
@@ -82,6 +93,7 @@ const handleStartConversation = async (customer: Customer) => {
         conversation={selectedConversation}
         messages={messages}
         loading={loading}
+        isLoadingMessage={isLoadingMessage}
         onSendMessage={handleSendMessage}
       />
     </div>

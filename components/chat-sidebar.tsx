@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, MessageCircle } from "lucide-react"
+import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { vendorApi } from "@/lib/api"
+import { vendorApi } from "@/lib/api" // Assuming vendorApi exists and fetches vendors
 
 export interface Customer {
   _id: string
@@ -14,12 +14,14 @@ export interface Customer {
   totalOrders?: number
   moneySpent?: number
   status?: "approved" | "pending" | "rejected"
+  // storeId is the vendor/store ID used for starting conversations
+  storeId: string
 }
 
 interface ChatSidebarProps {
   selectedCustomer: Customer | null
-  onSelectCustomer: (customer: Customer) => void
-  onStartConversation: (customer: Customer) => void
+  onSelectCustomer: (customer: Customer) => void | Promise<void>
+  onStartConversation: (customer: Customer) => void | Promise<void>
 }
 
 export function ChatSidebar({
@@ -37,10 +39,11 @@ export function ChatSidebar({
     try {
       setLoading(true)
 
+      // Assuming vendorApi.getAll(page, pageSize)
       const response = await vendorApi.getAll(page, 10)
       const { requests = [], paginationInfo } = response?.data?.data || {}
 
-      // Only approved vendors -> mapped into your Customer shape
+      // Only approved vendors mapped to Customer shape
       const approvedCustomers: Customer[] = (requests as any[])
         .filter((req) => req.status === "approved")
         .map((req) => ({
@@ -51,6 +54,7 @@ export function ChatSidebar({
           totalOrders: 0, // placeholder until backend sends real values
           moneySpent: 0,  // placeholder until backend sends real values
           status: req.status,
+          storeId: req._id, // vendor/store ID used for chat
         }))
 
       setCustomers(approvedCustomers)
@@ -105,9 +109,14 @@ export function ChatSidebar({
               key={customer._id}
               role="button"
               tabIndex={0}
-              onClick={() => onSelectCustomer(customer)}
+              // ⭐ Clicking this whole row triggers onSelectCustomer,
+              // which in the page will either open or create a conversation
+              onClick={() => void onSelectCustomer(customer)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") onSelectCustomer(customer)
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  void onSelectCustomer(customer)
+                }
               }}
               className={`group w-full p-4 border-b border-gray-100 text-left transition-colors cursor-pointer ${
                 selectedCustomer?._id === customer._id ? "bg-blue-50" : "hover:bg-gray-50"

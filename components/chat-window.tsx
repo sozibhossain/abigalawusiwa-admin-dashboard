@@ -27,14 +27,13 @@ export function ChatWindow({
   const scrollRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToast()
 
-  // Header info similar to the design
   const headerTitle = useMemo(
     () => conversation?.store?.name || "Conversation",
     [conversation],
   )
 
   const customerName = useMemo(() => {
-    // assume first participant is the customer side
+    // assume first participant is the vendor/customer side
     return conversation?.participants?.[0]?.user?.name || "Vendor"
   }, [conversation])
 
@@ -71,7 +70,7 @@ export function ChatWindow({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey && !isSending) {
       e.preventDefault()
-      handleSendMessage()
+      void handleSendMessage()
     }
   }
 
@@ -85,12 +84,10 @@ export function ChatWindow({
 
   return (
     <div className="flex-1 flex flex-col bg-white">
-      {/* Header – matches design */}
+      {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">
-            {headerTitle}
-          </h3>
+          <h3 className="text-sm font-semibold text-gray-900">{headerTitle}</h3>
           <p className="text-xs text-gray-500">From: {customerName}</p>
         </div>
         <div className="flex items-center gap-4">
@@ -104,7 +101,7 @@ export function ChatWindow({
         </div>
       </div>
 
-      {/* Messages area – light blue background like screenshot */}
+      {/* Messages area */}
       <div
         ref={scrollRef}
         className="flex-1 bg-[#E8F2FF] px-8 py-6 overflow-y-auto space-y-6"
@@ -204,7 +201,7 @@ export function ChatWindow({
         )}
       </div>
 
-      {/* Input – grey bar with attach + send like the design */}
+      {/* Input */}
       <div className="px-6 py-4 border-t border-gray-200 bg-white">
         <div className="flex items-center gap-3 rounded-full bg-gray-100 px-4 py-2">
           <button
